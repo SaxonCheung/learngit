@@ -1,0 +1,26 @@
+msysgit是Windows版的Git，从http://msysgit.github.io/下载，然后按默认选项安装即可。
+$ git config --global user.name "Your Name"
+$ git config --global user.email "email@example.com"
+
+$ mkdir learngit
+$ cd learngit
+$ pwd
+/Users/michael/learngit
+
+$ git init
+Initialized empty Git repository in /Users/michael/learngit/.git/
+
+$ git add readme.txt
+$ git commit -m "wrote a readme file"
+[master (root-commit) cb926e7] wrote a readme file
+ 1 file changed, 2 insertions(+)
+ create mode 100644 readme.txt
+ 
+ $ git add file1.txt
+$ git add file2.txt file3.txt
+$ git commit -m "add 3 files."
+
+运行git status命令看看结果
+
+比如你休假两周从国外回来，第一天上班时，已经记不清上次怎么修改的readme.txt，所以，需要用git diff这个命令看看。
+
