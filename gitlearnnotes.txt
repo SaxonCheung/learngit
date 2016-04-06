@@ -101,3 +101,117 @@ $ git merge dev
 $ git branch -d dev 
 用带参数的git log也可以看到分支的合并情况
 $ git log --graph --pretty=oneline --abbrev-commit
+用git log --graph命令可以看到分支合并图
+--no-ff参数，表示禁用Fast forward
+$ git merge --no-ff -m "merge with no-ff" dev
+因为本次合并要创建一个新的commit，所以加上-m参数，把commit描述写进去。
+合并后，我们用git log看看分支历史
+$ git log --graph --pretty=oneline --abbrev-commit
+把当前工作现场“储藏”起来，等以后恢复现场后继续工作
+$ git stash
+工作区是干净的，刚才的工作现场存到哪去了？用git stash list命令看看：
+$ git stash list
+工作现场还在，Git把stash内容存在某个地方了，但是需要恢复一下，有两个办法：
+一是用git stash apply恢复，但是恢复后，stash内容并不删除，你需要用git stash drop来删除；
+另一种方式是用git stash pop，恢复的同时把stash内容也删了
+开发代号为Vulcan的新功能
+$ git checkout -b feature-vulcan
+开发完毕
+$ git add vulcan.py
+$ git status
+$ git commit -m "add feature vulcan"
+接到上级命令，因经费不足，新功能必须取消
+虽然白干了，但是这个分支还是必须就地销毁
+$ git branch -d feature-vulcan
+error: The branch 'feature-vulcan' is not fully merged.
+If you are sure you want to delete it, run 'git branch -D feature-vulcan'.
+销毁失败。Git友情提醒，feature-vulcan分支还没有被合并，如果删除，将丢失掉修改，如果要强行删除，需要使用命令git branch -D feature-vulcan
+现在我们强行删除
+$ git branch -D feature-vulcan
+Deleted branch feature-vulcan (was 756d4af).
+终于删除成功
+
+查看远程库的信息，用git remote
+$ git remote
+显示更详细的信息
+$ git remote -v
+
+推送分支
+git push origin master 
+git pudh origin dev 
+
+打一個新標籤
+$ git tag v1.0
+查看所有標籤
+$ git tag 
+默认标签是打在最新提交的commit上的。有时候，如果忘了打标签，比如，现在已经是周五了，但应该在周一打的标签没有打，怎么办
+方法是找到历史提交的commit id，然后打上就可以了
+$ git log --pretty=oneline --abbrev-commit
+6a5819e merged bug fix 101
+cc17032 fix bug 101
+7825a50 merge with no-ff
+6224937 add merge
+59bc1cb conflict fixed
+400b400 & simple
+75a857c AND simple
+fec145a branch test
+d17efd8 remove test.txt
+比方说要对add merge这次提交打标签，它对应的commit id是6224937，敲入命令
+$ git tag v0.9 6224937
+查看标签信息
+$ git show v0.9
+创建带有说明的标签，用-a指定标签名，-m指定说明文字
+$ git tag -a v0.1 -m "version 0.1 released" 3628164
+如果标签打错了，也可以删除
+$ git tag -d v0.1
+推送某个标签到远程
+$ git push origin v1.0
+推送所有標籤
+$ git push origin --tags
+如果标签已经推送到远程，要删除远程标签就麻烦一点，先从本地删除
+$ git tag -d v1.0
+然后，从远程删除。删除命令也是push
+$ git push origin :refs/tags /v1.0
+
+点“Fork”就在自己的账号下克隆了一个bootstrap仓库，然后，从自己的账号下clone
+git clone git@github.com:michaelliao/bootstrap.git
+一定要从自己的账号下clone仓库，这样你才能推送修改
+
+让Git显示颜色，会让命令输出看起来更醒目
+$ git config --global color.ui true
+在Git工作区的根目录下创建一个特殊的.gitignore文件
+裡面建要忽略的文件
+
+st表示status
+$ git config --global alia.st status
+配置Git的时候，加上--global是针对当前用户起作用的，如果不加，那只针对当前的仓库起作用
+每个仓库的Git配置文件都放在.git/config文件中
+$ cat .git/config 
+要删除别名，直接把对应的行删掉即可
+
+搭建Git服务器
+搭建Git服务器需要准备一台运行Linux的机器，强烈推荐用Ubuntu或Debian，这样，通过几条简单的apt命令就可以完成安装
+假设你已经有sudo权限的用户账号，下面，正式开始安装
+第一步，安装git
+$ sudo apt-get install git
+第二步，创建一个git用户，用来运行git服务
+$ sudo adduser git
+第三步，创建证书登录
+收集所有需要登录的用户的公钥，就是他们自己的id_rsa.pub文件，把所有公钥导入到/home/git/.ssh/authorized_keys文件里，一行一个
+第四步，初始化Git仓库
+先选定一个目录作为Git仓库，假定是/srv/sample.git，在/srv目录下输入命令
+$ sudo git init --bare sample.git
+Git就会创建一个裸仓库，裸仓库没有工作区，因为服务器上的Git仓库纯粹是为了共享，所以不让用户直接登录到服务器上去改工作区，并且服务器上的Git仓库通常都以.git结尾。然后，把owner改为git
+$ sudo chown -R git:git sample.git
+第五步，禁用shell登录
+出于安全考虑，第二步创建的git用户不允许登录shell，这可以通过编辑/etc/passwd文件完成。找到类似下面的一行
+git:x:1001:1001:,,,:/home/git:/bin/bash
+改为
+git:x:1001:1001:,,,:/home/git:/usr/bin/git-shell
+这样，git用户可以正常通过ssh使用git，但无法登录shell，因为我们为git用户指定的git-shell每次一登录就自动退出
+第六步，克隆远程仓库
+现在，可以通过git clone命令克隆远程仓库了，在各自的电脑上运行
+$ git clone git@server:/srv/sample.git
+Cloning into 'sample'...
+warning: You appear to have cloned an empty repository
+剩下的推送就简单了
